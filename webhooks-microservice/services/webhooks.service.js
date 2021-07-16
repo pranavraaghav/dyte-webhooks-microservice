@@ -1,6 +1,7 @@
 const Webhook = require("../models/webhook");
 const db = require("../database/connection");
 const uuid4 = require("uuid4");
+const axios = require("axios");
 /**
  * @typedef {import('moleculer').Context} Context Moleculer's Context
  */
@@ -14,7 +15,7 @@ module.exports = {
 	actions: {
 		register: {
 			params: {
-				targetUrl: { type: "string" },
+				targetUrl: { type: "url" },
 			},
 			async handler(ctx) {
 				try {
@@ -36,7 +37,7 @@ module.exports = {
 		update: {
 			params: {
 				id: { type: "string" },
-				newTargetUrl: { type: "string" },
+				newTargetUrl: { type: "url" },
 			},
 			async handler(ctx) {
 				try {
@@ -93,17 +94,53 @@ module.exports = {
 						return {
 							code: 200,
 						};
-					} 
+					}
 					return {
 						code: 404,
 					};
 				} catch (error) {
 					return {
 						code: 500,
-						message: error.toString()
+						message: error.toString(),
 					};
 				}
 			},
+		},
+		trigger: {
+			// params: {
+			// 	ipAddress: { type: "url" },
+			// },
+			async handler() {
+				// Fetch all targerUrls
+				const targetUrls = await Webhook.findAll().then((webhooks) => {
+					const list = [];
+					webhooks.forEach((webhook) => {
+						list.push(webhook.targetUrl);
+					});
+					return list;
+				});
+				console.log(targetUrls);
+				this.massTriggerUrl(targetUrls, { ipAddress: "192.168.0.1"});
+			},
+		},
+	},
+
+	methods: {
+		/**
+		 * 
+		 */
+		async massTriggerUrl(targetUrls, data) {
+			targetUrls.forEach((targetUrl) => {
+				data.timestamp = Date.now();
+				axios
+					.post(targetUrl, data)
+					.then((res) => {
+						console.log(`Status: ${res.status}`);
+					})
+					.catch((err) => {
+						console.log(err);
+					});
+			});
 		},
 	},
 

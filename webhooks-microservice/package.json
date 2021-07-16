@@ -25,6 +25,7 @@
     "moleculer-repl": "^0.6.4"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "express": "^4.17.1",
     "moleculer": "^0.14.13",
     "nats": "^1.4.12",
