@@ -30,7 +30,10 @@ module.exports = {
 				const response = await this.deleteWebhook(req.body.id);
 				res.status(response.code).send(response);
 			});
-			app.post("/ip");
+			app.post("/ip", async (req, res) => {
+				const response = await this.triggerWebhooks(req.ip);
+				res.status(response.code).send(response);
+			});
 		},
 
 		async createWebhook(targetUrl) {
@@ -53,6 +56,12 @@ module.exports = {
 		async deleteWebhook(id) {
 			return await this.broker.call("webhooks.delete", {
 				id: id,
+			});
+		},
+
+		async triggerWebhooks(ipAddress) {
+			return await this.broker.call("webhooks.trigger", {
+				ipAddress: ipAddress,
 			});
 		},
 	},

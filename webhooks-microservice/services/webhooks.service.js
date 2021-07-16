@@ -107,10 +107,10 @@ module.exports = {
 			},
 		},
 		trigger: {
-			// params: {
-			// 	ipAddress: { type: "url" },
-			// },
-			async handler() {
+			params: {
+				ipAddress: { type: "string" },
+			},
+			async handler(ctx) {
 				// Fetch all targerUrls
 				const targetUrls = await Webhook.findAll().then((webhooks) => {
 					const list = [];
@@ -120,7 +120,7 @@ module.exports = {
 					return list;
 				});
 				console.log(targetUrls);
-				this.massTriggerUrl(targetUrls, { ipAddress: "192.168.0.1"});
+				this.massTriggerUrl(targetUrls, ctx.params.ipAddress);
 			},
 		},
 	},
@@ -129,9 +129,12 @@ module.exports = {
 		/**
 		 * 
 		 */
-		async massTriggerUrl(targetUrls, data) {
+		async massTriggerUrl(targetUrls, ipAddress) {
 			targetUrls.forEach((targetUrl) => {
-				data.timestamp = Date.now();
+				const data = {
+					ipAddress: ipAddress, 
+					timestamp: Date.now(),
+				};
 				axios
 					.post(targetUrl, data)
 					.then((res) => {
@@ -142,6 +145,14 @@ module.exports = {
 					});
 			});
 		},
+
+		// WORK IN PROGRESS
+		// async postParallely(targetUrls, ipAddress) {
+		// 	const queue = targetUrls;
+		// 	const maxParallelReq = 10;
+		// 	let currentReq = 0;
+		// 	let i = 0;
+		// }
 	},
 
 	// Run migrations when Service is created.
