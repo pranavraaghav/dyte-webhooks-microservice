@@ -1,29 +1,36 @@
 [![Moleculer](https://badgen.net/badge/Powered%20by/Moleculer/0e83cd)](https://moleculer.services)
 
-# dyte-webhooks-microservice
-This is a [Moleculer](https://moleculer.services/)-based microservices project made for Dyte's problem statement VIT 2022 Batch. 
-Generated with the [Moleculer CLI](https://moleculer.services/docs/0.14/moleculer-cli.html).
+# Dyte Webhooks Microservice
+This is a [Moleculer](https://moleculer.services/)-based microservices project made for Dyte's Backend (JavaScript/TypeScript) problem statement of 2021 for VIT.
 
-## Usage
-### NPM based
-Start the project with `npm run dev` command. 
-In the terminal, try the following commands:
+The project satisfies all requirements while also implementing 1 out of 2 of the bonus requirements (Dockerization).
+
+## Setup and Usage
+### NPM
+Install required dependencies by running `npm install` <br/>
+Start the project with command `npm run dev` 
+
+You can begin by reading the docs at `localhost:8000/docs`
+
+### Docker
+Run the command `docker-compose up -d`. 
+
+Access the gateway from `localhost:8000`
+
+#### Terminal Command Examples
+In the terminal (valid for both NPM and Docker), try the following commands:
 - `nodes` - List all connected nodes.
 - `actions` - List all registered service actions.
-- `call greeter.hello` - Call the `greeter.hello` action.
-- `call greeter.welcome --name John` - Call the `greeter.welcome` action with the `name` parameter.
-
-### Docker based
-Run the command `docker-compose up -d` 
-This will build a docker image and spin up a container with 3 services.
+- `call webhooks.register --targetUrl http://targeturl.com` - Call the `webhooks.register` action with the `targetUrl` parameter.
+- `call webhooks.list` - Call the `webhooks.list` action.
 
 ## Docs
-You can access the docs for API usage by going to the `/docs` route.
+You can access the docs for API usage at the `/docs` route.
 
 ## Services
 - **nats**: Handles messaging between services (Docker only).
 - **express-gateway**: API Gateway service build using express.
-- **webhooks**: Webhooks service with `register`, `update`, `list`, `delete` and `trigger` actions. 
+- **webhooks**: Webhooks service with `register`, `list`, `update`, `delete` and `trigger` actions. 
 
 ## Choice of database
 The project uses the [sequelize](https://sequelize.org/) ORM paired with an sqlite3 database. I chose sqlite3 since it's in-memory database mode helps build and debug faster. In a production environment, this can easily be swapped for a postgres or mysql database.
