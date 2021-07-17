@@ -112,7 +112,7 @@ module.exports = {
 			},
 			async handler(ctx) {
 				try {
-					// Fetch all targerUrls
+					// Fetch all targetUrls
 					const targetUrls = await Webhook.findAll().then(
 						(webhooks) => {
 							const list = [];
@@ -144,16 +144,22 @@ module.exports = {
 		/**
 		 * An abstraction of sending a POST request
 		 * Exists to keep code clean
+		 * 
+		 * NOTE: All requests will have a timeout of 4s 
 		 */
 		async sendRequest(targetUrl, data, method = "post") {
-			const body = data;
-			return fetch(targetUrl, {
-				method: method,
-				body: JSON.stringify(body),
-				headers: { "Content-Type": "application/json" },
-			})
-				.then((res) => res.json())
-				.catch((err) => console.log(err));
+			try {
+				return fetch(targetUrl, {
+					method: method,
+					body: JSON.stringify(data),
+					headers: { "Content-Type": "application/json" },
+					timeout: 4000
+				})
+					.then((res) => res.json())
+					.catch((err) => console.log(err));
+			} catch (error) {
+				throw error;
+			}
 		},
 
 		/**
@@ -166,27 +172,31 @@ module.exports = {
 		 * determined by the slowest request in the batch.
 		 */
 		async sendRequestInBatches(targetUrls, ipAddress, batchSizeLimit = 10) {
-			// Split all targetUrls into batches
-			let batches = [];
-			while (targetUrls.length != 0) {
-				batches.push(targetUrls.splice(0, batchSizeLimit));
+			try {
+				// Split all targetUrls into batches
+				let batches = [];
+				while (targetUrls.length != 0) {
+					batches.push(targetUrls.splice(0, batchSizeLimit));
+				}
+				// Processing in batches
+				const processedBatches = await Promise.all(
+					batches.map(async (batch) => {
+						return await Promise.all(
+							batch.map(async (targetUrl) => {
+								return this.sendRequest(targetUrl, {
+									ipAddress: ipAddress,
+									timestamp: Date.now(),
+								});
+							})
+						);
+					})
+				);
+				// Merging batches into one array
+				let mergedResponses = [].concat.apply([], processedBatches);
+				return mergedResponses;
+			} catch (error) {
+				throw error;
 			}
-			// Processing in batches
-			const processedBatches = await Promise.all(
-				batches.map(async (batch) => {
-					return await Promise.all(
-						batch.map(async (targetUrl) => {
-							return this.sendRequest(targetUrl, {
-								ipAddress: ipAddress,
-								timestamp: Date.now(),
-							});
-						})
-					);
-				})
-			);
-			// Merging batches into one array
-			let mergedResponses = [].concat.apply([], processedBatches);
-			return mergedResponses;
 		},
 
 		/**
@@ -199,15 +209,15 @@ module.exports = {
 		 * the server might block us for sending in
 		 * potentially 100+ requests in a short period of time.
 		 */
-		// async sendRequestsInParallel(targetUrls, ipAddress) {
-		// 	targetUrls.forEach((targetUrl) => {
-		// 		const data = {
-		// 			ipAddress: ipAddress,
-		// 			timestamp: Date.now(),
-		// 		};
-		// 		this.sendRequest(targetUrl, data);
-		// 	});
-		// },
+		async sendRequestsInParallel(targetUrls, ipAddress) {
+			targetUrls.forEach((targetUrl) => {
+				const data = {
+					ipAddress: ipAddress,
+					timestamp: Date.now(),
+				};
+				this.sendRequest(targetUrl, data);
+			});
+		},
 	},
 
 	// Run migrations when Service is created.
