@@ -1,0 +1,27 @@
+version: "3.3"
+
+services:
+  nats:
+    image: nats:2
+
+  express-gateway:
+    build:
+      context: .
+    image: webhooks-microservice
+    env_file: docker-compose.env
+    ports: 
+      - "8000:8000"
+    environment:
+      SERVICES: express-gateway
+    depends_on:
+      - nats
+  
+  webhooks:
+    build:
+      context: .
+    image: webhooks-microservice
+    env_file: docker-compose.env
+    environment:
+      SERVICES: webhooks
+    depends_on:
+      - nats
