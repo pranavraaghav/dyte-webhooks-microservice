@@ -66,14 +66,15 @@ module.exports = {
 			async handler() {
 				try {
 					const webhooks = await Webhook.findAll();
-					// Processing the response structure before sending
+					// const webhooks would contain metadata that we dont need
+					// So we run a loop and extract only the values we care about
 					const listOfWebhooks = [];
 					webhooks.forEach((webhook) => {
 						listOfWebhooks.push(webhook.dataValues);
 					});
 					return {
 						code: 200,
-						webhooks: listOfWebhooks, // Returns empty if there are no entries
+						webhooks: listOfWebhooks,
 					};
 				} catch (error) {
 					return { code: 500 };
@@ -112,7 +113,7 @@ module.exports = {
 			},
 			async handler(ctx) {
 				try {
-					// Fetch all targetUrls
+					// Fetch all targetUrls in an array
 					const targetUrls = await Webhook.findAll().then(
 						(webhooks) => {
 							const list = [];
@@ -145,13 +146,14 @@ module.exports = {
 		 * An abstraction of sending a POST request
 		 * Exists to keep code clean
 		 * 
-		 * NOTE: All requests will have a timeout of 4s 
+		 * NOTE: All requests will have a timeout of 4s (Hardcoded for now)
 		 */
 		async sendRequest(targetUrl, data, method = "post") {
 			return fetch(targetUrl, {
 				method: method,
 				body: JSON.stringify(data),
 				headers: { "Content-Type": "application/json" },
+				// TODO: Change to signal based timeouts in production
 				timeout: 4000
 			})
 				.then((res) => res.json())
@@ -159,7 +161,7 @@ module.exports = {
 		},
 
 		/**
-		 * This approach splits all targetUrls into batches of size batchSizeLimit
+		 * This approach splits all targetUrls into batches of size batchSizeLimit = 10
 		 * and requests each batch in parallel.
 		 * The next batch is executed only after all the requests in the current
 		 * batch have been resolved.
@@ -173,11 +175,16 @@ module.exports = {
 			while (targetUrls.length != 0) {
 				batches.push(targetUrls.splice(0, batchSizeLimit));
 			}
+
 			// Processing in batches
 			const processedBatches = await Promise.all(
 				batches.map(async (batch) => {
+					// awaiting Promise.all() === waiting for all requests(promises) in a batch to resolve.
 					return await Promise.all(
 						batch.map(async (targetUrl) => {
+							// We DO NOT use await in the line below. 
+							// Doing so would prevent a request from being sent
+							// until the previous one has been resolved.
 							return this.sendRequest(targetUrl, {
 								ipAddress: ipAddress,
 								timestamp: Date.now(),
@@ -186,20 +193,21 @@ module.exports = {
 					);
 				})
 			);
-			// Merging batches into one array
+
+			// Merging batches into one array for cleaner response
 			let mergedResponses = [].concat.apply([], processedBatches);
 			return mergedResponses;
 		},
 
 		/**
-		 * Sends out all the requests parallely
-		 * "Parallel" here is sending a request
-		 * without waiting for a response from the previous request
-		 *
-		 * This works just fine if each targetUrl is unique
+		 * This method was my initial approach to sending requests in parallel.
+		 * You can skip reading this.
+		 * 
+		 * It works just fine if each targetUrl is unique
 		 * However, if a lot of requests go to a single endpoint,
 		 * the server might block us for sending in
-		 * potentially 100+ requests in a short period of time.
+		 * potentially 100+ requests within a short timeframe.
+		 * 
 		 */
 		async sendRequestsInParallel(targetUrls, ipAddress) {
 			targetUrls.forEach((targetUrl) => {
@@ -212,7 +220,8 @@ module.exports = {
 		},
 	},
 
-	// Run migrations when Service is created.
+	// Run upon service creation
+	// We use it to connect to DB and make migrations. 
 	created() {
 		// Testing connection to db
 		db.authenticate()
@@ -223,6 +232,8 @@ module.exports = {
 				console.log("Error connecting to DB");
 				console.log(err.toString());
 			});
+
+		// Run migrations 
 		const migrations = require("../models/migrations");
 		migrations()
 			.then(() => console.log("Migrations made"))
