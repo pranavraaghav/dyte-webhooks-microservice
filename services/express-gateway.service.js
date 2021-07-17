@@ -71,7 +71,7 @@ module.exports = {
 		app.use(express.json());
 		this.initializeRoutes(app);
 		app.listen(this.settings.port, () => {
-			console.log("STARTING SERVER");
+			console.log(`STARTING SERVER ON PORT ${this.settings.port}`);
 		});
 	},
 };
