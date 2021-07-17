@@ -31,6 +31,7 @@ module.exports = {
 				res.status(response.code).send(response);
 			});
 			app.post("/ip", async (req, res) => {
+				console.log(req.ips);
 				const response = await this.triggerWebhooks(req.ip);
 				res.status(response.code).send(response);
 			});

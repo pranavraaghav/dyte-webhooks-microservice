@@ -25,10 +25,10 @@
     "moleculer-repl": "^0.6.4"
   },
   "dependencies": {
-    "axios": "^0.21.1",
     "express": "^4.17.1",
     "moleculer": "^0.14.13",
     "nats": "^1.4.12",
+    "node-fetch": "^2.6.1",
     "sequelize": "^6.6.5",
     "sqlite3": "^5.0.2",
     "uuid4": "^2.0.2"

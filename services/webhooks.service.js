@@ -1,7 +1,7 @@
 const Webhook = require("../models/webhook");
 const db = require("../database/connection");
 const uuid4 = require("uuid4");
-const axios = require("axios");
+const fetch = require("node-fetch");
 /**
  * @typedef {import('moleculer').Context} Context Moleculer's Context
  */
@@ -111,48 +111,103 @@ module.exports = {
 				ipAddress: { type: "string" },
 			},
 			async handler(ctx) {
-				// Fetch all targerUrls
-				const targetUrls = await Webhook.findAll().then((webhooks) => {
-					const list = [];
-					webhooks.forEach((webhook) => {
-						list.push(webhook.targetUrl);
-					});
-					return list;
-				});
-				console.log(targetUrls);
-				this.massTriggerUrl(targetUrls, ctx.params.ipAddress);
+				try {
+					// Fetch all targerUrls
+					const targetUrls = await Webhook.findAll().then(
+						(webhooks) => {
+							const list = [];
+							webhooks.forEach((webhook) => {
+								list.push(webhook.targetUrl);
+							});
+							return list;
+						}
+					);
+					const responses = await this.sendRequestInBatches(
+						targetUrls,
+						ctx.params.ipAddress
+					);
+					return {
+						code: 200,
+						responses: responses,
+					};
+				} catch (error) {
+					return {
+						code: 500,
+						error: error,
+					};
+				}
 			},
 		},
 	},
 
 	methods: {
 		/**
-		 * 
+		 * An abstraction of sending a POST request
+		 * Exists to keep code clean
 		 */
-		async massTriggerUrl(targetUrls, ipAddress) {
-			targetUrls.forEach((targetUrl) => {
-				const data = {
-					ipAddress: ipAddress, 
-					timestamp: Date.now(),
-				};
-				axios
-					.post(targetUrl, data)
-					.then((res) => {
-						console.log(`Status: ${res.status}`);
-					})
-					.catch((err) => {
-						console.log(err);
-					});
-			});
+		async sendRequest(targetUrl, data, method = "post") {
+			const body = data;
+			return fetch(targetUrl, {
+				method: method,
+				body: JSON.stringify(body),
+				headers: { "Content-Type": "application/json" },
+			})
+				.then((res) => res.json())
+				.catch((err) => console.log(err));
 		},
 
-		// WORK IN PROGRESS
-		// async postParallely(targetUrls, ipAddress) {
-		// 	const queue = targetUrls;
-		// 	const maxParallelReq = 10;
-		// 	let currentReq = 0;
-		// 	let i = 0;
-		// }
+		/**
+		 * This approach splits all targetUrls into batches of size batchSizeLimit
+		 * and requests each batch in parallel.
+		 * The next batch is executed only after all the requests in the current
+		 * batch have been resolved.
+		 *
+		 * One disadvantage here is that the time taken to finish a batch is
+		 * determined by the slowest request in the batch.
+		 */
+		async sendRequestInBatches(targetUrls, ipAddress, batchSizeLimit = 10) {
+			// Split all targetUrls into batches
+			let batches = [];
+			while (targetUrls.length != 0) {
+				batches.push(targetUrls.splice(0, batchSizeLimit));
+			}
+			// Processing in batches
+			const processedBatches = await Promise.all(
+				batches.map(async (batch) => {
+					return await Promise.all(
+						batch.map(async (targetUrl) => {
+							return this.sendRequest(targetUrl, {
+								ipAddress: ipAddress,
+								timestamp: Date.now(),
+							});
+						})
+					);
+				})
+			);
+			// Merging batches into one array
+			let mergedResponses = [].concat.apply([], processedBatches);
+			return mergedResponses;
+		},
+
+		/**
+		 * Sends out all the requests parallely
+		 * "Parallel" here is sending a request
+		 * without waiting for a response from the previous request
+		 *
+		 * This works just fine if each targetUrl is unique
+		 * However, if a lot of requests go to a single endpoint,
+		 * the server might block us for sending in
+		 * potentially 100+ requests in a short period of time.
+		 */
+		// async sendRequestsInParallel(targetUrls, ipAddress) {
+		// 	targetUrls.forEach((targetUrl) => {
+		// 		const data = {
+		// 			ipAddress: ipAddress,
+		// 			timestamp: Date.now(),
+		// 		};
+		// 		this.sendRequest(targetUrl, data);
+		// 	});
+		// },
 	},
 
 	// Run migrations when Service is created.
