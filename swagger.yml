@@ -1,0 +1,120 @@
+openapi: '3.0.0'
+
+info:
+  title: Dyte Service Gateway
+  version: '1.0'
+
+servers:
+  - url: http://localhost:8000/
+
+paths:
+  /create: 
+    post: 
+      requestBody:
+        required: true
+        content: 
+          application/json: 
+            schema: 
+              type: object
+              properties:
+                targetUrl:
+                  type: string
+                  example: "http://yourserverhere.com"
+      responses:
+        '200':
+          description: Created new Webhook
+          content: 
+            application/json: 
+              schema: 
+                type: object
+                properties:
+                  code: 
+                    type: number
+                    example: 200
+                  id: 
+                    type: string
+                    example: b192f113-6cf9-4634-45e0-3ae06ac98b8
+        '500': 
+          description: Server error
+
+  /read:
+    get: 
+      responses:
+        '200':
+          description: Fetched all webhooks successfully
+          content: 
+            application/json: 
+              schema: 
+                type: object
+                properties:
+                  code: 
+                    type: number
+                    example: 200
+                  webhooks: 
+                    type: array
+                    example: [{id: "e8745c37-bdb3-408f-bf39-b65a1219699a", targetUrl: "http://yourserverhere.com"}, {id: "b192f113-6cf9-4634-45e0-3ae06ac98b8", targetUrl: "http://alsoyourserverhere.com"}]
+        '500': 
+          description: Server error
+
+  /update: 
+    put: 
+      requestBody:
+        required: true
+        content: 
+          application/json: 
+            schema: 
+              type: object
+              properties:
+                id: 
+                  type: string
+                  example: 447540bd-e5c2-4cef-acae-2fb388521054
+                newTargetUrl:
+                  type: string
+                  example: "http://yourserverhere.com"
+      responses:
+        '204':
+          description: Updated record
+        '404':
+          description: Record not found
+        '500': 
+          description: Server error
+
+  /delete: 
+    delete: 
+      requestBody:
+        required: true
+        content: 
+          application/json: 
+            schema: 
+              type: object
+              properties:
+                id: 
+                  type: string
+                  example: 447540bd-e5c2-4cef-acae-2fb388521054
+      responses:
+        '200':
+          description: Deleted record
+        '404':
+          description: Record not found
+        '500': 
+          description: Server error
+  
+  /ip: 
+    post: 
+      responses:
+        '200':
+          description: Triggered webhooks successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code: 
+                    type: number
+                    example: 200
+                  responses:
+                    type: array
+                    example: [{message: "This object is a response from webhook"}, {message: "This object is a response from webhook"}]
+
+        '500': 
+          description: Server error

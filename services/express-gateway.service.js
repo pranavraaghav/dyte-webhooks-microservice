@@ -1,5 +1,7 @@
 const express = require("express");
-
+const swaggerUI = require("swagger-ui-express");
+const YAML = require("yamljs");
+const swaggerDoc = YAML.load("./swagger.yml");
 /**
  * @typedef {import('moleculer').Context} Context Moleculer's Context
  */
@@ -69,7 +71,10 @@ module.exports = {
 	// Creating the actual server and having it listen to a port
 	created() {
 		const app = express();
+
+		// Middlewares
 		app.use(express.json());
+		app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 		this.initializeRoutes(app);
 		app.listen(this.settings.port, () => {
 			console.log(`STARTING SERVER ON PORT ${this.settings.port}`);

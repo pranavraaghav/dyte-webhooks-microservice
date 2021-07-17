@@ -17,9 +17,12 @@ In the terminal, try the following commands:
 Run the command `docker-compose up -d` 
 This will build a docker image and spin up a container with 3 services.
 
+## Docs
+You can access the docs for API usage by going to the `/docs` route.
+
 ## Services
-- **nats**: Handles messaging between services (Docker only)
-- **express-gateway**: API Gateway service build using express
+- **nats**: Handles messaging between services (Docker only).
+- **express-gateway**: API Gateway service build using express.
 - **webhooks**: Webhooks service with `register`, `update`, `list`, `delete` and `trigger` actions. 
 
 ## Choice of database

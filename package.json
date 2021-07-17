@@ -31,7 +31,9 @@
     "node-fetch": "^2.6.1",
     "sequelize": "^6.6.5",
     "sqlite3": "^5.0.2",
-    "uuid4": "^2.0.2"
+    "swagger-ui-express": "^4.1.6",
+    "uuid4": "^2.0.2",
+    "yamljs": "^0.3.0"
   },
   "engines": {
     "node": ">= 10.x.x"
