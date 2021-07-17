@@ -33,7 +33,6 @@ module.exports = {
 				res.status(response.code).send(response);
 			});
 			app.post("/ip", async (req, res) => {
-				console.log(req.ips);
 				const response = await this.triggerWebhooks(req.ip);
 				res.status(response.code).send(response);
 			});
@@ -75,6 +74,8 @@ module.exports = {
 		// Middlewares
 		app.use(express.json());
 		app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
+
+		// Start up gateway server
 		this.initializeRoutes(app);
 		app.listen(this.settings.port, () => {
 			console.log(`STARTING SERVER ON PORT ${this.settings.port}`);
