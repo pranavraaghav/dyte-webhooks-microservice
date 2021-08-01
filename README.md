@@ -5,19 +5,32 @@ This is a [Moleculer](https://moleculer.services/)-based microservices project m
 
 The project satisfies all requirements while also implementing 1 out of 2 of the bonus requirements (Dockerization).
 
+## Problem Description
+API Implementation -
+- [X]  `GET /list` - Return all registered webhooks with their IDs
+- [X]  `GET /register` - takes `targetUrl` parameter, registers and returns ID
+- [X]  `GET /update` - takes `newTargetUrl` and `id` parameters, updates url at ID
+- [X]  `POST /ip` - takes `ipAddress` in request body JSON, triggers webhooks and sends `{ ipAddress, timestamp: UNIX timestamp }` to all URLs in parallel.
+<br>
+
+Bonus tasks -
+- [X] Dockerize
+- [ ] Perform 5 max retries if any webhook returns a non-success response code
+
 ## Setup and Usage
 ### NPM
 Install required dependencies by running `npm install` <br/>
 Start the project with command `npm run dev` 
 
 You can begin by reading the docs at `localhost:8000/docs`
+#### (OR)
 
 ### Docker
 Run the command `docker-compose up -d`. 
 
 Access the gateway from `localhost:8000`
 
-#### Terminal Command Examples
+## Terminal Command Examples
 In the terminal (valid for both NPM and Docker), try the following commands:
 - `nodes` - List all connected nodes.
 - `actions` - List all registered service actions.
